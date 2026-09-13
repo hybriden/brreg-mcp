@@ -1,0 +1,5 @@
+node_modules/
+.wrangler/
+roller_totalbestand.json.gz
+roller_totalbestand.json.gz.etag
+sql/data_*.sql
