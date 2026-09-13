@@ -38,7 +38,9 @@ def hent_dump():
             os.replace(DUMP + ".tmp", DUMP)
             if ny := r.headers.get("ETag"):
                 open(DUMP + ".etag", "w").write(ny)
-            return r.headers.get("Last-Modified") or time.strftime("%Y-%m-%d")
+            # Workeren starter synken fra denne datoen, så den må være ISO. brreg sender
+            # Last-Modified som Javas Date.toString ("Sat Sep 12 04:03:01 CEST 2026").
+            return time.strftime("%Y-%m-%d", time.gmtime())
     except urllib.error.HTTPError as e:
         if e.code != 304:
             raise
@@ -110,12 +112,6 @@ def skriv_sql(kunder, firma, kilde_dato):
             filnr += 1
         radnr, ut = 0, []
 
-    ut.append("DELETE FROM metadata;")
-    ut.append(
-        f"INSERT INTO metadata (nokkel, verdi) VALUES "
-        f"('kilde_dato', {sitat(kilde_dato)}), "
-        f"('kilde', 'Enhetsregisteret rolledump, rollen REGN');"
-    )
     ut.append("DELETE FROM regnskapsforer;")
     verdier = [
         f"({sitat(rn)}, {sitat(navn)}, {sitat(godkj)}, {len(kunder[rn])})"
@@ -141,6 +137,14 @@ def skriv_sql(kunder, firma, kilde_dato):
         radnr += len(blokk)
         if radnr >= RADER_PER_FIL:
             nyfil()
+    # Sist, så synk-pekeren nullstilles etter at hele dumpen er inne og workeren
+    # spiller av endringer fra kilde_dato over det den eventuelt skrev under importen.
+    ut.append("DELETE FROM metadata;")
+    ut.append(
+        f"INSERT INTO metadata (nokkel, verdi) VALUES "
+        f"('kilde_dato', {sitat(kilde_dato)}), "
+        f"('kilde', 'Enhetsregisteret rolledump, rollen REGN');"
+    )
     nyfil()
     return len(par)
 

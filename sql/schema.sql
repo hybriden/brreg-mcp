@@ -6,6 +6,8 @@ CREATE TABLE kunde (
   kunde_orgnr TEXT NOT NULL,   -- enheten som har oppgitt det som regnskapsfører
   PRIMARY KEY (regn_orgnr, kunde_orgnr)
 );
+-- Synken slår opp og sletter per kunde.
+CREATE INDEX kunde_etter_kunde ON kunde (kunde_orgnr);
 
 DROP TABLE IF EXISTS regnskapsforer;
 CREATE TABLE regnskapsforer (
